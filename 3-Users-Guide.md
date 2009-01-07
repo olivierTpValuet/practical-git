@@ -1,4 +1,4 @@
-[Practical Git for People and Corporations](..) - User's Guide
+[Practical Git for People and Corporations](..) - Users Guide
 
 # Setting up Git
 
