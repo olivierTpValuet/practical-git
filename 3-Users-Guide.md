@@ -1,33 +1,66 @@
-[Practical Git for People and Corporations](..) - Users Guide
+[Practical Git for People and Corporations](..) - User's Guide
 
 # Setting up Git
 
-* Windows - [Download msysGit](http://code.google.com/p/msysgit/) and install it:
-    * Do not pick the option to add all unix tools to your path (the red one)
-    * Pick OpenSSH
+## on Windows
 
-### Creating ssh keys
+the recommended tool to use git is mSysGit (here is used release 1.6)
+* download its installer from [the home page of mSysGit](http://code.google.com/p/msysgit) (see link "featured" in green box on the right-hand side of that home page)[Download msysGit]
+* install it by running its installer and by answering to the following questions: 
+    * welcome page: next
+    * information page: next
+    * destination location: use default directory (not a mandatory), next
+    * menu folder: use default value, next
+    * additional tasks: at least, check ~~Add "git bash here"~~, next
+    * path environment: "Use Git Bash Only" (or "Run Git from Windows Command Prompt" if you have Cygwin), next
+    * ssh executable: choose plink, next
+    * software is then being installed
+* test its installation:
+    * if you have cygwin on your box: just open a cygwin/windows prompt
+    * else: from windows explorer, right-click on your home folder and choose "Git Bash here" to open a window git prompt
+    * `$ git --version => git version 1.6.1.9.g97c34`
+* config it (you will not modify directly the configuration file `~/.gitconfig`, but through `git config` that will create the file if first time or update it):
+$ git config --global user.name     "<firstName> <LASTNAME>"
+$ git config --global user.email    <emailAddress>
+$ git config --global core.autocrlf false
+$ git config --global color.ui      auto
 
-* Windows - In Windows' Explorer, right click on a folder where you would like a git-enabled shell and select *Git bash here*
+example with john smith having a nice email domain:
 
-Now, whatever you system may be, run this:
-  
-    $ ssh-keygen -C "john.doe@company.com" -t rsa
-
-* Use the default file name **id_rsa**.
-* **Make a backup copy of the generated keys**, which can be found in your home, under a `.ssh` directory.
-
-## Configuring Git
-
-This updates your `*~/.gitconfig` file:
-
-    $ git config --global user.name     "John Doe"
-    $ git config --global user.email    john.doe@company.com
-    $ git config --global core.autocrlf false
-    $ git config --global color.ui      auto
-    $ git config --list
+$ git config --global user.name     "John SMITH"
+$ git config --global user.email    john.smith@oz.moon
+$ git config --global core.autocrlf false
+$ git config --global color.ui      auto
 
 For project-based configuration options, remove the `--global` argument. This will update your project's `<path>/<project>/.git/.gitconfig` file instead, and will be shared with the team. Note that project configuration options win over global configuration options.
+* test its config:
+`$ git config --list
+=>
+core.symlinks=false
+core.autocrlf=true
+color.diff=auto
+pack.packsizelimit=2g
+user.name=<firstName> <LASTNAME>
+user.email=<firstName>.<lastName>@<company>.com
+core.autocrlf=false
+color.ui=auto`
+
+# Quick workflow on local work
+
+git init ; to create a new local repo
+<create files>
+git add . ; to get all files
+git add <files> ; to get only some files
+git status ; or git diff --cached
+git commit ; note: will prompt for a message
+git commit -a -m "<message>" ; = git add . ; git commit -m "<message>"
+
+git branch ; show local branches (the one with a * indicates the current branch)
+git branch <name> ; create a new branch
+git checkout <branch> ; switch from current branch to branch <branch>
+git checkout -b <branch> ; = git branch <branch> ; git checkout <branch>
+
+git merge <branch> ; merge branch <branch> into current branch
 
 # Git Worst Practices
 
@@ -36,7 +69,135 @@ Let's try to debunk bad Git habits here.
 * Watch out not to grow the habit of using the `-a` argument to `git commit` mechanically.
     * Let's say you do an interactive staging of some changes to commit, using the wonderful `git add -i`. Then, you `commit -a`. Instead of committing only what you had interactively selected to be committed, you end up committing everything!
 
-# Project repository workflow
+# Accessing remote repositories
+
+## preliminary: the ssh key pair
+
+1. if not done yet, open a window git prompt on your home folder:
+          * with windows explorer, right click on your home folder <username> => a window popup opens
+          * select Git bash here => the window git prompt opens
+
+2. check if folder .ssh exists ($ ls -l .ssh):
+    * if no, it means that you never generated your ssh keys, then time to do it!
+    * if yes, check if the content of the file id_rsa.pub ends with the chosen email address that you will record in your remote repo server
+                o if no, make a backup copy of the already generated keys, both private and public (id_rsa and id_rsa.pub)
+                o if yes, see last step
+
+3. generate your ssh keys:
+    * with openssh for gitosis or gitorious
+    * with putty for github
+
+4. provide your keys regarding the remote repo server:
+4.1. in case of use of gitosis:
+    * connect as original administrator on ci slave
+    * drop public sshkey files into keydir of your local gitosis-admin repository:
+        * $ cd <gitosis-admin-home>
+        * $ cp ~<username>/.ssh/id_rsa.pub keydir/<firstName>.<lastName>@<domainName>.pub
+        * $ sudo chmod 644 keydir/<firstName>.<lastName>@<domainName>.pub
+    * link that key into git (by pushing file into remote repository):
+        * $ git add keydir/<firstName>.<lastName>@<domainName>.pub
+        * $ git commit -m "added authentication for <user> with public sshkey <firstName>.<lastName>@<domainName>.pub"
+        * $ git push
+
+4.2. in case of use of gitorious:
+    * browse to home page of the web server if your gitorious
+    * register yourself on this site
+        * use your nickname as your username, and your email address from which you want to be warned
+        * you will receive an activation email, containing a url to use to activate your account.
+        * when you click on that url, you automatically log into the gitorious web site which tells that your account has been activated.
+        * set up your user account:
+            * click on My Account
+            * click on Edit details and write your Real Name; then Save this change
+            * click on Add SSH Key and paste in the textbox the whole contents of your public (*.pub) ssh key
+            * when gitorious set you up, you can get an official project from a remote repository
+
+4.3. in case of use of github:
+    * check if your default ssh application is PuTTY:
+
+      $ ssh -v
+      PuTTY Link: command-line connection utility
+      ...
+
+      If it's not PuTTY Link that is called, then:
+          o add the path to your PuTTY installation to Windows' PATH
+          o in your bash shell:
+                + if you use msysgit:
+                  mv /bin/ssh.exe /bin/ssh.exe.old
+                  ln -s <path-to-PuTTY-in-bash>/plink.exe /bin/ssh.exe
+
+                + if you use cygwin:
+                  ln -s <path-to-PuTTY-in-bash>/plink.exe /usr/local/bin/ssh
+
+    * if not done yet, generate your public/private key pair with puttygen (and copy the public key shown in the puttygen window for next step)
+    * provide your public key to github (copy from puttygen your public key generated by puttygen, and paste it in your github account thru your github account page)
+    * provide your private key to pageant
+    * configure a session called github-proxy with putty configuration:
+          o set the host to ssh.github.com, port to 443.
+          o under Connection -> SSH -> Auth, select your private key file for SSH authentication
+          o under Connection -> Proxy, select HTTP and enter appropriate information for the host and port of the proxy, and your proxy username and password
+    *
+      If ever these tips get out of date, go see this guide on github, but be weary that it's more complicated to find your way through this stuff!
+
+## the repositories themselves
+
+1. use of gitosis:
+    * add user in required group of projects:
+        * $ vim gitosis.conf:
+      [group <aGroupOfProjects>]
+        writable = { <relativePathToOneProject> }
+    -   members = { <userGitId> }
+    +   members = { <userGitId> } <firstName>.<lastName>@<domainName>
+        * $ git add gitosis.conf
+        * $ git commit -m "granted commit rights for <firstName>.<lastName>@<domainName>.pub on groups { <GroupOfProjects> }"
+        * $ git push
+
+2. use of gitorious:
+         1. if not done yet, register yourself on this site (see section above)
+         2. to clone a project hosted on gitorious: see the project's web page, click on its mainline repository, click on More info... alongside the Public clone url
+         3. to create a project:
+            * set slug
+            * you must push an existing, local repository towards a newly created gitorious project before yourself or anybody else can clone the project from gitorious (until you do this initial push, if someone tries to clone the project from gitorious, git will tell him/her that there's no matching remote HEAD)
+         4. each repository provides the basic instructions to help you push to it or clone it
+
+3. use of github:
+      * w/o a firewall:
+      $ git clone http://github.com/<path>/<project-name>.git
+      $ git clone git@github.com:<path>/<project-name>.git
+
+      * with a firewall, this is harder, but still easily done using the following tips:
+          o To clone a github-hosted repository to which you don't need to be able to push later, use git with the http protocol:
+            http_proxy=http://<proxy-usermane>:<proxy-password>@172.22.176.47:3128 git clone http://github.com/<path>/<project-name>.git
+
+            The output produced should look like this:
+            Initialized empty Git repository in /<path>/<project-name>/.git/
+            ...
+            Getting pack list for http://github.com/<path>/<project-name>.git/
+            ...
+            walk 5fcb34d0f815ed5b8cf9ee35a77692f5c1ed7f84
+            Checking out files: 100% (678/678), done.
+
+          o To clone a github-hosted repository which you will want to pull/push from/to later:
+                + you need to fork it under your own github account. See github's guides for this easy step
+                + create a github-proxy thru putty as indicated above
+                + when your github account has its own fork of the project, use git with ssh instead of http:
+                      git clone git@github-proxy:<path>/<project-name>.git
+
+            The output produced will look different than if you cloned over http:
+            Initialized empty Git repository in <path>/<project-name>/.git/
+            remote: Counting objects: 999, done.
+            remote: Compressing objects: 100% (706/706), done.
+            Receiving objects: 100% (999/999), 2.37 MiB | 27 KiB/s, done.
+            Resolving deltas: 100% (282/282), done.
+            Checking out files: 100% (678/678), done.
+
+4. general use:
+      $ git clone       git://<networked-box>/<path>/<project-name>.git
+      $ git clone       <git>@<networked-box>:<path>/<project-name>.git
+      $ git clone     rsync://<networked-box>/<path>/<project-name>.git
+      $ git clone  http://<git.networked-box>/<path>/<project-name>.git
+      $ git clone                             <path>/<project-name>.git
+
+# Full project repository workflow
 
 * John Doe: Boss, I need to work on something!
 * Boss: John, you'll work on <project>!
